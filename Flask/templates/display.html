@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Crop Disease Detection</title>
+  <!--meta tags-->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!--bootstrap-->
+  <link rel="stylesheet"
+    href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+    crossorigin="anonymous">
+  <!--font-awesome icons-->
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    crossorigin="anonymous" />
+  <!--stylesheets-->
+  <link href="../static/styles/style.css" rel="stylesheet" type="text/css" media="all">
+  <!-- Chatbot Styles -->
+  <link href="../static/styles/chatbot.css" rel="stylesheet" type="text/css">
+  
+  <style>
+    /* Enhanced Upload Styles */
+    .upload-container {
+      margin: 2rem 0;
+    }
+
+    .upload-area {
+      border: 3px dashed #28a745;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #e8f5e8 0%, #f0f9f0 100%);
+      padding: 4rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      min-height: 300px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .upload-area:hover {
+      border-color: #20c735;
+      background: linear-gradient(135deg, #d4edda 0%, #e8f5e8 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(40, 167, 69, 0.2);
+    }
+
+    .upload-area.dragover {
+      border-color: #20c735;
+      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+      transform: scale(1.02);
+    }
+
+    .upload-area.uploaded {
+      border-color: #20c735;
+      background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+      border-style: solid;
+    }
+
+    .upload-icon {
+      font-size: 4rem;
+      color: #28a745;
+      margin-bottom: 1rem;
+    }
+
+    .upload-text h4 {
+      color: #28a745;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      font-size: 1.5rem;
+    }
+
+    .upload-text p {
+      color: #6c757d;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+
+    .file-types {
+      background: rgba(40, 167, 69, 0.1);
+      color: #28a745;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: inline-block;
+    }
+
+    #inputImage {
+      display: none !important;
+    }
+
+    .btn-predict {
+      background: linear-gradient(135deg, #28a745 0%, #20c735 100%);
+      border: none;
+      color: white;
+      padding: 12px 40px;
+      border-radius: 25px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      margin-top: 2rem;
+    }
+
+    .btn-predict:hover:not(:disabled) {
+      background: linear-gradient(135deg, #20c735 0%, #1e7e34 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
+    }
+
+    .btn-predict:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+
+    .upload-loading {
+      display: none;
+      text-align: center;
+      margin: 2rem 0;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #28a745;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    #output-image {
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      opacity: 0;
+      transform: scale(0.9);
+      transition: all 0.3s ease;
+    }
+  </style>
+</head>
+
+<body>
+  <!--header-->
+  <div class="header-outs inner_page-banner" id="home">
+    <div class="headder-top">
+      <!--nav-->
+      <nav>
+        <div id="logo">
+          <h1><a href="/">Crop Disease Detection</a></h1>
+        </div>
+      </nav>
+      <!--//nav-->
+    </div>
+  </div>
+  <!--//header-->
+
+  <!--breadcrumb-->
+  <div class="using-border py-3">
+    <div class="inner_breadcrumb ml-4">
+      <ul class="short_ls">
+        <li><a href="/">Home</a></li>
+      </ul>
+    </div>
+  </div>
+  <!--//breadcrumb-->
+
+  <!--about / result-->
+  <section class="about py-lg-4 py-md-3 py-sm-3 py-3" id="about">
+  <!-- Enhanced Test Section -->
+<section class="blog_w3ls py-3 pb-5 pt-10" id="test">
+  <div class="container pb-xl-5 pb-lg-3">
+    <h3 class="title text-center mb-lg-5 mb-md-4 mb-sm-4 mb-3">Test Your Plants</h3>
+    
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <form action="{{ url_for('predict') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+          
+          <!-- Enhanced Upload Area -->
+          <div class="upload-container">
+            <div class="upload-area" id="uploadArea">
+              <div class="upload-icon">
+                <i class="fa fa-cloud-upload" aria-hidden="true"></i>
+              </div>
+              <div class="upload-text">
+                <h4>Drop your leaf image here</h4>
+                <p>or click to browse files</p>
+                <div class="file-types">
+                  Supports: JPG, PNG, JPEG (Max 10MB)
+                </div>
+              </div>
+              <input type="file" name="file" id="inputImage" accept=".jpg,.jpeg,.png" required>
+            </div>
+          </div>
+
+          <!-- Loading Animation -->
+          <div class="upload-loading" id="uploadLoading">
+            <div class="spinner"></div>
+            <p>Analyzing your plant image...</p>
+          </div>
+
+          <!-- Enhanced Predict Button -->
+          <div class="text-center">
+            <button class="btn btn-predict" type="submit" id="predictBtn" disabled>
+              <i class="fa fa-search mr-2"></i>Analyze Plant
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Enhanced Image Preview -->
+    <div class="row justify-content-center mt-4">
+      <div class="col-md-6 text-center">
+        <img id="output-image" class="img-fluid" style="max-width: 100%; display: none;" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// Enhanced Upload Functionality - Fixed Double Upload Issue
+document.addEventListener('DOMContentLoaded', function() {
+  const uploadArea = document.getElementById('uploadArea');
+  const fileInput = document.getElementById('inputImage');
+  const predictBtn = document.getElementById('predictBtn');
+  const uploadLoading = document.getElementById('uploadLoading');
+  const outputImage = document.getElementById('output-image');
+  const uploadForm = document.getElementById('uploadForm');
+
+  // Drag and Drop Functionality
+  uploadArea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    uploadArea.classList.add('dragover');
+  });
+
+  uploadArea.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    uploadArea.classList.remove('dragover');
+  });
+
+  uploadArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    uploadArea.classList.remove('dragover');
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      // Set the files to the input without triggering change event
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(files[0]);
+      fileInput.files = dataTransfer.files;
+      handleFileSelect(files[0]);
+    }
+  });
+
+  // Click to Upload - Fixed to prevent double trigger
+  uploadArea.addEventListener('click', function(e) {
+    // Only trigger file input if we didn't click on the actual input
+    if (e.target !== fileInput) {
+      fileInput.click();
+    }
+  });
+
+  // File Input Change - Only handle when user actually selects
+  fileInput.addEventListener('change', function(e) {
+    if (e.target.files.length > 0) {
+      handleFileSelect(e.target.files[0]);
+    }
+  });
+
+  // Handle File Selection - Fixed to prevent double execution
+  function handleFileSelect(file) {
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please select a valid image file (JPG, PNG, JPEG)');
+      resetUpload();
+      return;
+    }
+
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB');
+      resetUpload();
+      return;
+    }
+
+    // Update upload area
+    uploadArea.classList.add('uploaded');
+    uploadArea.querySelector('h4').textContent = '✅ Image Selected: ' + file.name;
+    uploadArea.querySelector('p').textContent = 'Ready to analyze!';
+    
+    // Enable predict button
+    predictBtn.disabled = false;
+    predictBtn.innerHTML = '<i class="fa fa-search mr-2"></i>Analyze Plant';
+
+    // Preview image
+    previewImage(file);
+  }
+
+  // Enhanced Preview Function
+  function previewImage(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      outputImage.src = e.target.result;
+      outputImage.style.display = 'block';
+      
+      // Smooth reveal animation
+      setTimeout(() => {
+        outputImage.style.opacity = '1';
+        outputImage.style.transform = 'scale(1)';
+      }, 100);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Form Submission with Loading
+  uploadForm.addEventListener('submit', function(e) {
+    predictBtn.disabled = true;
+    predictBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>Analyzing...';
+    uploadLoading.style.display = 'block';
+  });
+
+  // Reset functionality
+  function resetUpload() {
+    uploadArea.classList.remove('uploaded', 'dragover');
+    uploadArea.querySelector('h4').textContent = 'Drop your leaf image here';
+    uploadArea.querySelector('p').textContent = 'or click to browse files';
+    predictBtn.disabled = true;
+    predictBtn.innerHTML = '<i class="fa fa-search mr-2"></i>Analyze Plant';
+    outputImage.style.display = 'none';
+    uploadLoading.style.display = 'none';
+    fileInput.value = '';
+  }
+
+  // Add reset button functionality if needed
+  window.resetUpload = resetUpload;
+});
+</script>
+  
+    <div class="container py-lg-5 py-md-4 py-sm-4 py-3">
+      <div class="row justify-content-center">
+        <div class="col-md-10 about-two-grids">
+          <h3 class="mb-md-4 mb-sm-3 mb-3 text-center">Result</h3>
+          <div class="about-para-txt text-justify">
+            {{result}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!--//about-->
+
+  <!--footer-->
+  <footer>
+    <div class="container pt-5 pb-3">
+      <div class="footer-w3layouts-head text-center">
+        <h2><a href="/">Crop Disease Detection</a></h2>
+      </div>
+      <div class="bottom-wthree-footer text-center pt-md-4 pt-3">
+        <p>
+          Credits to <br>
+          Lingaraj - Project Lead & Developer <br>
+          Charan A C - Data Scientist & Model Trainer <br>
+          Thippesh Patel S B - Frontend Developer <br>
+          Jayanth C N - Backend Developer & Deployment Specialist
+        </p>
+      </div>
+      <!--move icon-->
+      <div class="text-center">
+        <a href="#home" class="move-top text-center mt-3">
+          <i class="fa fa-arrow-up" aria-hidden="true"></i>
+        </a>
+      </div>
+      <!--//move icon-->
+    </div>
+  </footer>
+  <!--//footer-->
+
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+    integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+    integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+    crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+    crossorigin="anonymous"></script>
+
+    <!-- Chatbot Toggle Button -->
+<div id="chat-toggle">
+  <i class="fa fa-comments" aria-hidden="true"></i>
+</div>
+
+<!-- Chatbot Widget -->
+<div id="chatbot-widget">
+  <div class="chatbot-header">
+    <h4>
+      <i class="fa fa-leaf" aria-hidden="true"></i>
+      Crop Disease Assistant
+    </h4>
+    <button id="chat-close">
+      <i class="fa fa-times" aria-hidden="true"></i>
+    </button>
+  </div>
+  
+  <div id="chat-messages">
+    <!-- Messages will appear here -->
+  </div>
+  
+  <div class="chat-input-area">
+    <input 
+      type="text" 
+      id="chat-input" 
+      placeholder="Ask about crops or diseases..."
+      autocomplete="off"
+    />
+    <button id="chat-send">
+      <i class="fa fa-paper-plane" aria-hidden="true"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Chatbot Script -->
+<script src="../static/js/chatbot.js"></script>
+</body>
+
+</html>
